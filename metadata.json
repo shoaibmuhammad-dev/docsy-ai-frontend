@@ -1,0 +1,6 @@
+{
+  "name": "Chat with PDF",
+  "description": "Upload PDFs and chat with an AI assistant with clickable citation markers, split-screen PDF reader, and real-time streaming.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
