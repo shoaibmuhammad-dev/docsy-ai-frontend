@@ -1,17 +1,17 @@
-// Client Component (interactive mock PDF viewer with zoom, page navigation, and citation highlight rings)
-// REPLACE INTERNALS WITH react-pdf, KEEP THIS PROPS CONTRACT
-'use client';
+// Client Component (scrollable page list with toolbar, zoom and scroll/page sync; renders mock pages for now)
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import {
-  FiChevronLeft,
-  FiChevronRight,
+  FiChevronDown,
+  FiChevronUp,
+  FiMaximize2,
   FiZoomIn,
   FiZoomOut,
-  FiMaximize2,
-} from 'react-icons/fi';
+} from "react-icons/fi";
 
-export interface PdfViewerProps {
+// REPLACE INTERNALS WITH react-pdf, KEEP THIS PROPS CONTRACT
+interface PdfViewerProps {
   fileUrl: string;
   pageCount: number;
   currentPage: number;
@@ -19,270 +19,257 @@ export interface PdfViewerProps {
   onPageChange: (page: number) => void;
 }
 
+const BASE_PAGE_WIDTH = 560; // px at 100% zoom
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2;
+const ZOOM_STEP = 0.25;
+const LINE_WIDTHS = [96, 100, 88, 100, 78, 94, 100, 66];
+
+function MockPageContent({ page }: { page: number }) {
+  const lineWidth = (index: number) =>
+    LINE_WIDTHS[(page * 3 + index) % LINE_WIDTHS.length];
+
+  return (
+    <div className="flex h-full flex-col gap-3 p-[9%]">
+      <div className="h-4 w-2/3 rounded bg-zinc-300" />
+      <div className="h-2.5 w-1/3 rounded bg-zinc-200" />
+      <div className="mt-2 space-y-2">
+        {Array.from({ length: 9 }, (_, i) => (
+          <div
+            key={i}
+            className="h-2 rounded bg-zinc-200"
+            style={{ width: `${lineWidth(i)}%` }}
+          />
+        ))}
+      </div>
+      {page % 3 === 0 && (
+        <div className="my-2 h-1/5 rounded-lg bg-zinc-100 ring-1 ring-zinc-200" />
+      )}
+      <div className="space-y-2">
+        {Array.from({ length: 8 }, (_, i) => (
+          <div
+            key={i}
+            className="h-2 rounded bg-zinc-200"
+            style={{ width: `${lineWidth(i + 4)}%` }}
+          />
+        ))}
+      </div>
+      <span className="mt-auto self-center text-[11px] font-medium text-zinc-400">
+        {page}
+      </span>
+    </div>
+  );
+}
+
 export function PdfViewer({
-  fileUrl,
   pageCount,
   currentPage,
   highlightPage,
   onPageChange,
 }: PdfViewerProps) {
-  const [zoomLevel, setZoomLevel] = useState<number>(100);
-  const [activeHighlight, setActiveHighlight] = useState<number | undefined>(highlightPage);
-  const [prevHighlight, setPrevHighlight] = useState<number | undefined>(highlightPage);
+  const [zoom, setZoom] = useState<number | "fit">("fit");
 
-  // Derive active highlight during render when prop changes
-  if (highlightPage !== prevHighlight) {
-    setPrevHighlight(highlightPage);
-    setActiveHighlight(highlightPage);
-  }
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const pageRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const observedPageRef = useRef(1); // last page we reported from the user's own scrolling
+  const ignoreObserverUntilRef = useRef(0); // pause page tracking during programmatic scrolls
+  const isFirstScrollRef = useRef(true);
+  const onPageChangeRef = useRef(onPageChange);
 
-  const [isEditingPage, setIsEditingPage] = useState(false);
-  const [inputPage, setInputPage] = useState<string>('');
-  const displayPage = isEditingPage ? inputPage : String(currentPage);
+  const totalPages = Math.max(pageCount, 1);
+  const page = Math.min(Math.max(currentPage, 1), totalPages);
 
-  const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Handle citation highlight scroll and 2-second timeout
   useEffect(() => {
-    if (highlightPage) {
-      const el = pageRefs.current.get(highlightPage);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+    onPageChangeRef.current = onPageChange;
+  });
 
-      const timer = setTimeout(() => {
-        setActiveHighlight(undefined);
-      }, 2000);
-      return () => clearTimeout(timer);
+  // Page requested from outside (citation click, prev/next, page input): scroll
+  // THIS container to it. Never use scrollIntoView, it would scroll the whole page.
+  useEffect(() => {
+    if (page === observedPageRef.current && !isFirstScrollRef.current) return;
+
+    const container = scrollRef.current;
+    const element = pageRefs.current[page];
+    if (!container || !element) return;
+
+    ignoreObserverUntilRef.current = Date.now() + 800;
+    container.scrollTo({
+      top: Math.max(0, element.offsetTop - 12),
+      behavior: isFirstScrollRef.current ? "auto" : "smooth",
+    });
+
+    observedPageRef.current = page;
+    isFirstScrollRef.current = false;
+  }, [page]);
+
+  // The user scrolls by hand: report which page is most visible
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const visibleRatios = new Map<number, number>();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const pageNumber = Number((entry.target as HTMLElement).dataset.page);
+          visibleRatios.set(pageNumber, entry.intersectionRatio);
+        }
+
+        if (Date.now() < ignoreObserverUntilRef.current) return;
+
+        let bestPage = 0;
+        let bestRatio = 0;
+        visibleRatios.forEach((ratio, pageNumber) => {
+          if (ratio > bestRatio) {
+            bestRatio = ratio;
+            bestPage = pageNumber;
+          }
+        });
+
+        if (bestPage && bestPage !== observedPageRef.current) {
+          observedPageRef.current = bestPage;
+          onPageChangeRef.current(bestPage);
+        }
+      },
+      { root: container, threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+
+    for (let n = 1; n <= totalPages; n++) {
+      const element = pageRefs.current[n];
+      if (element) observer.observe(element);
     }
-  }, [highlightPage]);
 
-  // Zoom handlers
-  const handleZoomIn = () => {
-    setZoomLevel((prev) => Math.min(prev + 25, 200));
+    return () => observer.disconnect();
+  }, [totalPages, zoom]);
+
+  const zoomBy = (delta: number) => {
+    const base = zoom === "fit" ? 1 : zoom;
+    setZoom(
+      Math.min(
+        MAX_ZOOM,
+        Math.max(MIN_ZOOM, Math.round((base + delta) * 100) / 100),
+      ),
+    );
   };
 
-  const handleZoomOut = () => {
-    setZoomLevel((prev) => Math.max(prev - 25, 50));
-  };
-
-  const handleFitWidth = () => {
-    setZoomLevel(100);
-    const el = pageRefs.current.get(currentPage);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const commitPageInput = (input: HTMLInputElement) => {
+    const requested = Number.parseInt(input.value, 10);
+    if (Number.isNaN(requested)) {
+      input.value = String(page);
+      return;
     }
+    const next = Math.min(Math.max(requested, 1), totalPages);
+    input.value = String(next);
+    if (next !== page) onPageChange(next);
   };
 
-  // Page input submission
-  const handlePageInputSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsEditingPage(false);
-    const parsed = parseInt(inputPage, 10);
-    if (!isNaN(parsed) && parsed >= 1 && parsed <= pageCount) {
-      onPageChange(parsed);
-      const el = pageRefs.current.get(parsed);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      const next = currentPage - 1;
-      onPageChange(next);
-      const el = pageRefs.current.get(next);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < pageCount) {
-      const next = currentPage + 1;
-      onPageChange(next);
-      const el = pageRefs.current.get(next);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  };
-
-  // Generate pages array
-  const pages = Array.from({ length: pageCount }, (_, idx) => idx + 1);
+  const pageWidth =
+    zoom === "fit" ? "100%" : `${Math.round(BASE_PAGE_WIDTH * zoom)}px`;
+  const toolbarButton =
+    "rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent";
 
   return (
-    <div className="flex flex-col h-full w-full bg-zinc-100 border-l border-zinc-200 select-none">
-      {/* Viewer Toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-zinc-200 text-xs shrink-0 gap-2">
-        {/* Pagination controls */}
-        <div className="flex items-center gap-1.5">
+    <div className="flex h-full min-h-0 w-full flex-col bg-zinc-100">
+      {/* Toolbar: never scrolls */}
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-200 bg-white px-3 py-2">
+        <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={handlePrevPage}
-            disabled={currentPage <= 1}
+            className={toolbarButton}
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
             aria-label="Previous page"
-            className="p-1 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 disabled:pointer-events-none transition-colors"
           >
-            <FiChevronLeft className="w-4 h-4" />
+            <FiChevronUp className="h-4 w-4" />
           </button>
-
-          <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1">
-            <span className="text-zinc-500">Page</span>
-            <input
-              type="text"
-              value={displayPage}
-              onFocus={() => {
-                setIsEditingPage(true);
-                setInputPage(String(currentPage));
-              }}
-              onChange={(e) => setInputPage(e.target.value)}
-              onBlur={handlePageInputSubmit}
-              className="w-10 px-1.5 py-0.5 text-center text-xs font-medium rounded-md border border-zinc-200 bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-600"
-              aria-label="Current page number"
-            />
-            <span className="text-zinc-500">of {pageCount}</span>
-          </form>
-
           <button
             type="button"
-            onClick={handleNextPage}
-            disabled={currentPage >= pageCount}
+            className={toolbarButton}
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
             aria-label="Next page"
-            className="p-1 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 disabled:pointer-events-none transition-colors"
           >
-            <FiChevronRight className="w-4 h-4" />
+            <FiChevronDown className="h-4 w-4" />
           </button>
+          <div className="ml-1 flex items-center gap-1.5 text-xs text-zinc-500">
+            <input
+              key={page}
+              type="number"
+              min={1}
+              max={totalPages}
+              defaultValue={page}
+              onBlur={(e) => commitPageInput(e.currentTarget)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitPageInput(e.currentTarget);
+              }}
+              aria-label="Page number"
+              className="w-12 rounded-lg border border-zinc-200 px-1.5 py-1 text-center text-xs text-zinc-800 [appearance:textfield] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+            <span>/ {totalPages}</span>
+          </div>
         </div>
 
-        {/* Zoom controls */}
-        <div className="flex items-center gap-1 text-zinc-600">
+        <div className="flex items-center gap-0.5">
           <button
             type="button"
-            onClick={handleZoomOut}
-            disabled={zoomLevel <= 50}
+            className={toolbarButton}
+            onClick={() => zoomBy(-ZOOM_STEP)}
+            disabled={zoom !== "fit" && zoom <= MIN_ZOOM}
             aria-label="Zoom out"
-            className="p-1 rounded-lg hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 transition-colors"
           >
-            <FiZoomOut className="w-4 h-4" />
+            <FiZoomOut className="h-4 w-4" />
           </button>
-
-          <span className="text-[11px] font-medium text-zinc-500 min-w-[36px] text-center">
-            {zoomLevel}%
+          <span className="w-11 text-center text-xs tabular-nums text-zinc-500">
+            {zoom === "fit" ? "Fit" : `${Math.round(zoom * 100)}%`}
           </span>
-
           <button
             type="button"
-            onClick={handleZoomIn}
-            disabled={zoomLevel >= 200}
+            className={toolbarButton}
+            onClick={() => zoomBy(ZOOM_STEP)}
+            disabled={zoom !== "fit" && zoom >= MAX_ZOOM}
             aria-label="Zoom in"
-            className="p-1 rounded-lg hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-30 transition-colors"
           >
-            <FiZoomIn className="w-4 h-4" />
+            <FiZoomIn className="h-4 w-4" />
           </button>
-
-          <div className="w-px h-3.5 bg-zinc-200 mx-1" />
-
           <button
             type="button"
-            onClick={handleFitWidth}
+            className={toolbarButton}
+            onClick={() => setZoom("fit")}
             aria-label="Fit to width"
-            title="Fit to width"
-            className="p-1 rounded-lg hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
           >
-            <FiMaximize2 className="w-3.5 h-3.5" />
+            <FiMaximize2 className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* Pages Scrollable Canvas */}
+      {/* The ONLY scroller for the pages. min-h-0 + flex-1 + overflow-auto is what keeps
+          the 21 pages inside this panel instead of stretching the whole page. */}
       <div
-        ref={containerRef}
-        className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 flex flex-col items-center bg-zinc-200/60"
+        ref={scrollRef}
+        role="region"
+        aria-label="PDF pages"
+        className="relative min-h-0 flex-1 overflow-auto overscroll-contain p-4"
       >
-        {pages.map((pageNum) => {
-          const isHighlighted = activeHighlight === pageNum;
-
-          return (
+        <div className="space-y-4">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
             <div
-              key={pageNum}
-              ref={(el) => {
-                if (el) pageRefs.current.set(pageNum, el);
-                else pageRefs.current.delete(pageNum);
+              key={n}
+              data-page={n}
+              ref={(element) => {
+                pageRefs.current[n] = element;
               }}
-              style={{
-                width: `${Math.round(zoomLevel * 5.2)}px`,
-                maxWidth: '100%',
-              }}
-              onClick={() => onPageChange(pageNum)}
-              className={`relative bg-white shadow-md rounded-lg aspect-[1/1.414] p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 cursor-pointer ${
-                isHighlighted
-                  ? 'ring-4 ring-indigo-600 ring-offset-4 ring-offset-zinc-200 shadow-indigo-200/50 scale-[1.01]'
-                  : 'hover:shadow-lg'
+              style={{ width: pageWidth }}
+              className={`mx-auto aspect-[1/1.414] overflow-hidden bg-white shadow-sm ring-1 transition-shadow duration-300 ${
+                highlightPage === n
+                  ? "ring-4 ring-indigo-500/70"
+                  : "ring-zinc-200"
               }`}
             >
-              {/* Highlight badge indicator */}
-              {isHighlighted && (
-                <div className="absolute top-3 right-3 bg-indigo-600 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-xs animate-bounce">
-                  Cited Page
-                </div>
-              )}
-
-              {/* Mock document header */}
-              <div className="border-b border-zinc-100 pb-3">
-                <div className="flex items-center justify-between text-[9px] uppercase tracking-wider text-zinc-400">
-                  <span className="truncate max-w-[200px]">{fileUrl.split('/').pop()}</span>
-                  <span>Document Section {Math.ceil(pageNum / 4)}</span>
-                </div>
-                <div className="h-3 w-2/3 bg-zinc-800 rounded mt-3" />
-                <div className="h-2 w-1/3 bg-zinc-300 rounded mt-2" />
-              </div>
-
-              {/* Mock text body simulating document content */}
-              <div className="space-y-3.5 py-4 flex-1">
-                <div className="space-y-1.5">
-                  <div className="h-2 w-full bg-zinc-200 rounded" />
-                  <div className="h-2 w-[92%] bg-zinc-200 rounded" />
-                  <div className="h-2 w-[96%] bg-zinc-200 rounded" />
-                  <div className="h-2 w-[85%] bg-zinc-200 rounded" />
-                </div>
-
-                {/* Simulated visual diagram / table on certain pages */}
-                {pageNum % 3 === 0 ? (
-                  <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg space-y-2">
-                    <div className="h-2 w-1/4 bg-indigo-200 rounded" />
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="h-8 bg-zinc-100 rounded border border-zinc-200" />
-                      <div className="h-8 bg-zinc-100 rounded border border-zinc-200" />
-                      <div className="h-8 bg-zinc-100 rounded border border-zinc-200" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    <div className="h-2 w-full bg-zinc-200 rounded" />
-                    <div className="h-2 w-[90%] bg-zinc-200 rounded" />
-                    <div className="h-2 w-[94%] bg-zinc-200 rounded" />
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <div className="h-2 w-[88%] bg-zinc-200 rounded" />
-                  <div className="h-2 w-[95%] bg-zinc-200 rounded" />
-                  <div className="h-2 w-[70%] bg-zinc-200 rounded" />
-                </div>
-              </div>
-
-              {/* Mock page footer */}
-              <div className="border-t border-zinc-100 pt-3 flex items-center justify-between text-[10px] text-zinc-400">
-                <span>Confidential Document</span>
-                <span className="font-semibold text-zinc-600">Page {pageNum} of {pageCount}</span>
-              </div>
+              <MockPageContent page={n} />
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );

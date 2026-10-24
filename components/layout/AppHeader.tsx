@@ -75,14 +75,14 @@ export function AppHeader({ user }: AppHeaderProps) {
                 aria-label="User profile options"
               >
                 <div className="w-6 h-6 rounded-lg bg-indigo-50 border border-indigo-200/60 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
-                  {user.name.charAt(0) || <FiUser className="w-3 h-3" />}
+                  {user?.name.charAt(0) || <FiUser className="w-3 h-3" />}
                 </div>
                 <div className="hidden sm:block text-left">
                   <p className="text-xs font-medium text-zinc-800 leading-tight truncate max-w-[120px]">
-                    {user.name}
+                    {user?.name}
                   </p>
                   <p className="text-[10px] text-zinc-400 leading-none truncate max-w-[120px]">
-                    {user.email}
+                    {user?.email}
                   </p>
                 </div>
                 <FiChevronDown className="w-3.5 h-3.5 text-zinc-400" />

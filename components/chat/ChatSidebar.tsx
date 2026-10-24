@@ -1,17 +1,17 @@
 // Client Component (chat history sidebar with search, new chat modal trigger, and delete menu)
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Chat, PdfDocument } from '@/lib/types';
-import { formatRelativeTime } from '@/lib/format';
-import { deleteChatAction } from '@/app/actions/chats';
-import { Button } from '@/components/ui/Button';
-import { DropdownMenu } from '@/components/ui/DropdownMenu';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { NewChatModal } from '@/components/documents/NewChatModal';
-import { useToast } from '@/components/ui/Toast';
+import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Chat, PdfDocument } from "@/lib/types";
+import { formatRelativeTime } from "@/lib/format";
+import { deleteChatAction } from "@/app/actions/chats";
+import { Button } from "@/components/ui/Button";
+import { DropdownMenu } from "@/components/ui/DropdownMenu";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { NewChatModal } from "@/components/documents/NewChatModal";
+import { useToast } from "@/components/ui/Toast";
 import {
   FiPlus,
   FiSearch,
@@ -20,7 +20,7 @@ import {
   FiTrash2,
   FiX,
   FiChevronLeft,
-} from 'react-icons/fi';
+} from "react-icons/fi";
 
 interface ChatSidebarProps {
   currentChatId: string;
@@ -41,7 +41,7 @@ export function ChatSidebar({
   onToggleCollapse,
   isMobileDrawer = false,
 }: ChatSidebarProps) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<Chat | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -50,7 +50,7 @@ export function ChatSidebar({
   const { toast } = useToast();
 
   const filteredChats = chats.filter((c) =>
-    c.title.toLowerCase().includes(search.toLowerCase())
+    c.title.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleDeleteChat = async () => {
@@ -64,9 +64,9 @@ export function ChatSidebar({
 
     if (res.success) {
       toast({
-        type: 'success',
-        title: 'Chat removed',
-        description: 'The conversation history was deleted.',
+        type: "success",
+        title: "Chat removed",
+        description: "The conversation history was deleted.",
       });
 
       // If deleted current chat, redirect to /documents or next chat
@@ -75,24 +75,26 @@ export function ChatSidebar({
         if (remaining.length > 0) {
           router.push(`/chats/${remaining[0].id}`);
         } else {
-          router.push('/documents');
+          router.push("/documents");
         }
       } else {
         router.refresh();
       }
     } else {
       toast({
-        type: 'error',
-        title: 'Delete failed',
+        type: "error",
+        title: "Delete failed",
         description: res.error,
       });
     }
   };
 
   const content = (
-    <div className="flex flex-col h-full bg-white border-r border-zinc-200 w-72 shrink-0">
+    // h-full + min-h-0 + flex-col: the header and buttons keep their size and
+    // only the chat list below scrolls
+    <div className="flex h-full min-h-0 w-72 shrink-0 flex-col border-r border-zinc-200 bg-white">
       {/* Sidebar Header */}
-      <div className="p-3.5 border-b border-zinc-200 flex items-center justify-between gap-2">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-200 p-3.5">
         <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
           Chat History
         </span>
@@ -121,7 +123,7 @@ export function ChatSidebar({
       </div>
 
       {/* New Chat Button & Search */}
-      <div className="p-3 space-y-2 border-b border-zinc-100">
+      <div className="shrink-0 space-y-2 border-b border-zinc-100 p-3">
         <Button
           variant="secondary"
           size="sm"
@@ -144,11 +146,13 @@ export function ChatSidebar({
         </div>
       </div>
 
-      {/* Chat List */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      {/* Chat List: the only scroller in the sidebar */}
+      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-2">
         {filteredChats.length === 0 ? (
           <div className="text-center py-8 text-xs text-zinc-400">
-            {chats.length === 0 ? 'No conversations yet.' : 'No matching chats.'}
+            {chats.length === 0
+              ? "No conversations yet."
+              : "No matching chats."}
           </div>
         ) : (
           filteredChats.map((chat) => {
@@ -159,8 +163,8 @@ export function ChatSidebar({
                 key={chat.id}
                 className={`group flex items-center justify-between p-2 rounded-xl text-xs transition-colors ${
                   isActive
-                    ? 'bg-indigo-50/80 text-indigo-900 font-semibold'
-                    : 'text-zinc-700 hover:bg-zinc-100/80'
+                    ? "bg-indigo-50/80 text-indigo-900 font-semibold"
+                    : "text-zinc-700 hover:bg-zinc-100/80"
                 }`}
               >
                 <Link
@@ -170,7 +174,7 @@ export function ChatSidebar({
                 >
                   <FiMessageSquare
                     className={`w-3.5 h-3.5 shrink-0 ${
-                      isActive ? 'text-indigo-600' : 'text-zinc-400'
+                      isActive ? "text-indigo-600" : "text-zinc-400"
                     }`}
                   />
                   <div className="min-w-0 flex-1">
@@ -195,7 +199,7 @@ export function ChatSidebar({
                   }
                   items={[
                     {
-                      label: 'Delete chat',
+                      label: "Delete chat",
                       icon: <FiTrash2 className="w-3.5 h-3.5" />,
                       isDestructive: true,
                       onClick: () => setChatToDelete(chat),

@@ -1,19 +1,19 @@
 // Server Component
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import { hasValidSession } from '@/lib/session';
-import { LoginForm } from '@/components/auth/LoginForm';
-import { Card } from '@/components/ui/Card';
-import { FiFileText } from 'react-icons/fi';
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { hasValidSession } from "@/lib/session";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { Card } from "@/components/ui/Card";
+import { FiFileText } from "react-icons/fi";
 
 export const metadata = {
-  title: 'Sign in · Chat with PDF',
-  description: 'Sign in to your Chat with PDF account',
+  title: "Sign in · Chat with PDF",
+  description: "Sign in to your Chat with PDF account",
 };
 
 export default async function LoginPage() {
   if (await hasValidSession()) {
-    redirect('/documents');
+    redirect("/documents");
   }
 
   return (
@@ -42,7 +42,9 @@ export default async function LoginPage() {
 
         {/* Demo credentials hint */}
         <div className="mt-4 p-3 rounded-xl bg-white border border-zinc-200 text-center text-xs text-zinc-500">
-          <span>Demo credentials pre-filled: test with any email or password</span>
+          <span>
+            Demo credentials pre-filled: test with any email or password
+          </span>
         </div>
       </div>
     </div>

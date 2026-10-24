@@ -1,9 +1,9 @@
-'use server';
+"use server";
 
-import { redirect } from 'next/navigation';
-import { signup, login } from '@/lib/api';
-import { setSessionCookie, clearSessionCookie } from '@/lib/session';
-import { ApiError } from '@/lib/types';
+import { redirect } from "next/navigation";
+import { signup, login } from "@/lib/api";
+import { setSessionCookie, clearSessionCookie } from "@/lib/session";
+import { ApiError } from "@/lib/types";
 
 export interface AuthActionState {
   error?: string;
@@ -13,14 +13,14 @@ export interface AuthActionState {
 
 export async function loginAction(
   _prevState: AuthActionState,
-  formData: FormData
+  formData: FormData,
 ): Promise<AuthActionState> {
-  const email = (formData.get('email') as string) || '';
-  const password = (formData.get('password') as string) || '';
+  const email = (formData.get("email") as string) || "";
+  const password = (formData.get("password") as string) || "";
 
   try {
-    await login(email, password);
-    await setSessionCookie();
+    const { token } = await login(email, password);
+    await setSessionCookie(token);
   } catch (err: unknown) {
     if (err instanceof ApiError) {
       return {
@@ -28,23 +28,24 @@ export async function loginAction(
         fieldErrors: err.fieldErrors,
       };
     }
-    return { error: 'An unexpected error occurred. Please try again.' };
+    return { error: "An unexpected error occurred. Please try again." };
   }
 
-  redirect('/documents');
+  // redirect() works by throwing, so it stays outside the try/catch
+  redirect("/documents");
 }
 
 export async function signupAction(
   _prevState: AuthActionState,
-  formData: FormData
+  formData: FormData,
 ): Promise<AuthActionState> {
-  const name = (formData.get('name') as string) || '';
-  const email = (formData.get('email') as string) || '';
-  const password = (formData.get('password') as string) || '';
+  const name = (formData.get("name") as string) || "";
+  const email = (formData.get("email") as string) || "";
+  const password = (formData.get("password") as string) || "";
 
   try {
-    await signup(name, email, password);
-    await setSessionCookie();
+    const { token } = await signup(name, email, password);
+    await setSessionCookie(token);
   } catch (err: unknown) {
     if (err instanceof ApiError) {
       return {
@@ -52,13 +53,13 @@ export async function signupAction(
         fieldErrors: err.fieldErrors,
       };
     }
-    return { error: 'An unexpected error occurred. Please try again.' };
+    return { error: "An unexpected error occurred. Please try again." };
   }
 
-  redirect('/documents');
+  redirect("/documents");
 }
 
 export async function logoutAction(): Promise<void> {
   await clearSessionCookie();
-  redirect('/login');
+  redirect("/login");
 }

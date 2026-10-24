@@ -48,9 +48,9 @@ export function ChatWorkspace({
 
   // Auto-scroll state
   const [isScrolledUp, setIsScrolledUp] = useState<boolean>(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastUserPromptRef = useRef<string>("");
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
@@ -80,10 +80,13 @@ export function ChatWorkspace({
     },
   });
 
-  // DOM scroll without state mutation inside effect
+  // Scrolls ONLY the message list. (scrollIntoView would also scroll the whole
+  // browser page, because it scrolls every scrollable ancestor.)
   const scrollElementToBottom = useCallback(
     (behavior: ScrollBehavior = "smooth") => {
-      messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+      const container = scrollContainerRef.current;
+      if (!container) return;
+      container.scrollTo({ top: container.scrollHeight, behavior });
     },
     [],
   );
@@ -113,6 +116,12 @@ export function ChatWorkspace({
     scrollElementToBottom,
   ]);
 
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    };
+  }, []);
+
   // Citation click handler
   const handleCitationClick = useCallback(
     (page: number, docId?: string) => {
@@ -120,7 +129,14 @@ export function ChatWorkspace({
         setActiveDocId(docId);
       }
       setCurrentPage(page);
+
+      // Highlight the cited page for 2 seconds
       setHighlightPage(page);
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+      highlightTimerRef.current = setTimeout(
+        () => setHighlightPage(undefined),
+        2000,
+      );
 
       if (!isDesktop) {
         setMobileTab("pdf");
@@ -181,30 +197,47 @@ export function ChatWorkspace({
     };
   }, [isDraggingDivider]);
 
-  return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-zinc-50 select-none">
-      {/* Top Header */}
-      <ChatHeader
-        title={chat.title}
-        documents={documents}
-        activeDocId={activeDocId}
-        onSelectDoc={setActiveDocId}
-        isPdfVisible={isPdfVisible}
-        onTogglePdf={() => setIsPdfVisible((prev) => !prev)}
-        onOpenMobileSidebar={() => {
-          if (isDesktop) {
-            setDesktopSidebarOpen((prev) => !prev);
-          } else {
-            setMobileSidebarOpen(true);
-          }
-        }}
-        mobileTab={mobileTab}
-        onSelectMobileTab={setMobileTab}
-        isDesktop={isDesktop}
-      />
+  // Which classes the PDF panel gets in each layout
+  const pdfPanelVisibility = isDesktop
+    ? isPdfVisible
+      ? "flex shrink-0"
+      : "hidden"
+    : mobileTab === "pdf"
+      ? "flex min-w-0 flex-1"
+      : "hidden";
 
-      {/* Main Workspace Body */}
-      <div className="flex-1 flex overflow-hidden relative">
+  return (
+    // Pinned to the screen, right below the 3.5rem (h-14) header, so the browser
+    // page itself can never scroll. Each panel scrolls inside its own box.
+    <div
+      className={`fixed inset-x-0 bottom-0 top-14 flex min-h-0 flex-col overflow-hidden bg-zinc-50 ${
+        isDraggingDivider ? "cursor-col-resize select-none" : ""
+      }`}
+    >
+      {/* Top Header */}
+      <div className="shrink-0">
+        <ChatHeader
+          title={chat.title}
+          documents={documents}
+          activeDocId={activeDocId}
+          onSelectDoc={setActiveDocId}
+          isPdfVisible={isPdfVisible}
+          onTogglePdf={() => setIsPdfVisible((prev) => !prev)}
+          onOpenMobileSidebar={() => {
+            if (isDesktop) {
+              setDesktopSidebarOpen((prev) => !prev);
+            } else {
+              setMobileSidebarOpen(true);
+            }
+          }}
+          mobileTab={mobileTab}
+          onSelectMobileTab={setMobileTab}
+          isDesktop={isDesktop}
+        />
+      </div>
+
+      {/* Main Workspace Body: takes the remaining height */}
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
         {/* Left Sidebar (Desktop collapsible) */}
         {isDesktop && (
           <ChatSidebar
@@ -228,19 +261,19 @@ export function ChatWorkspace({
           />
         )}
 
-        {/* Center: Chat panel */}
+        {/* Center: Chat panel (messages scroll, composer stays at the bottom) */}
         <div
-          className={`flex-1 flex flex-col min-w-0 bg-zinc-50/50 ${
+          className={`min-h-0 min-w-0 flex-1 flex-col bg-zinc-50/50 ${
             !isDesktop && mobileTab !== "chat" ? "hidden" : "flex"
           }`}
         >
-          {/* Messages scroll area */}
+          {/* Messages: the only scroller in this column */}
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
             aria-live="polite"
             aria-busy={isStreaming}
-            className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-5"
+            className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6"
           >
             {messages.length === 0 && !isStreaming ? (
               <EmptyChatState
@@ -297,17 +330,15 @@ export function ChatWorkspace({
                 </div>
               </div>
             )}
-
-            <div ref={messagesEndRef} className="h-2" />
           </div>
 
           {/* Floating Jump to Latest Button */}
           {isScrolledUp && (
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 type="button"
                 onClick={handleJumpToLatest}
-                className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 text-white text-xs font-medium shadow-lg hover:bg-zinc-800 transition-all cursor-pointer animate-in fade-in"
+                className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 text-white text-xs font-medium shadow-lg hover:bg-zinc-800 transition-all cursor-pointer"
                 aria-label="Jump to latest message"
               >
                 <FiArrowDown className="w-3.5 h-3.5" />
@@ -316,8 +347,8 @@ export function ChatWorkspace({
             </div>
           )}
 
-          {/* Composer Footer */}
-          <div className="p-3 sm:p-4 bg-white border-t border-zinc-200 shrink-0">
+          {/* Composer Footer: always visible at the bottom, like WhatsApp */}
+          <div className="shrink-0 border-t border-zinc-200 bg-white p-3 sm:p-4">
             <div className="max-w-3xl mx-auto">
               <MessageComposer
                 onSend={handleSendMessage}
@@ -343,22 +374,15 @@ export function ChatWorkspace({
           />
         )}
 
-        {/* Right: PDF Panel */}
+        {/* Right: PDF Panel (the viewer scrolls its own pages inside this box) */}
         <div
           style={
             isDesktop && isPdfVisible ? { width: `${pdfWidth}px` } : undefined
           }
-          className={`${
-            isDesktop
-              ? isPdfVisible
-                ? "flex shrink-0"
-                : "hidden"
-              : mobileTab === "pdf"
-                ? "flex flex-1"
-                : "hidden"
-          } overflow-hidden h-full`}
+          className={`${pdfPanelVisibility} h-full min-h-0 overflow-hidden`}
         >
           <PdfViewer
+            key={activeDoc.id}
             fileUrl={`/mock-files/${activeDoc.id}.pdf`}
             pageCount={activeDoc.pageCount || 10}
             currentPage={currentPage}

@@ -1,15 +1,19 @@
-'use server';
+"use server";
 
-import { revalidatePath } from 'next/cache';
-import { clearSessionCookie } from '@/lib/session';
-import { setDevFlag, getDevFlags, resetAllMockData } from '@/lib/api';
+import { revalidatePath } from "next/cache";
+import { clearSessionCookie } from "@/lib/session";
+import { setDevFlag, getDevFlags, resetAllMockData } from "@/lib/api";
 
 export async function toggleDevFlagAction(
-  flag: 'slowNetwork' | 'failNextRequest' | 'forceEmptyState' | 'forceStreamError',
-  value: boolean
+  flag:
+    | "slowNetwork"
+    | "failNextRequest"
+    | "forceEmptyState"
+    | "forceStreamError",
+  value: boolean,
 ) {
   await setDevFlag(flag, value);
-  revalidatePath('/', 'layout');
+  revalidatePath("/", "layout");
   return await getDevFlags();
 }
 
@@ -20,7 +24,7 @@ export async function expireSessionAction() {
 
 export async function resetMockDataAction() {
   await resetAllMockData();
-  revalidatePath('/', 'layout');
+  revalidatePath("/", "layout");
   return { success: true };
 }
 
