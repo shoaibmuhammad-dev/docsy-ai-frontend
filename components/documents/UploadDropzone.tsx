@@ -1,12 +1,12 @@
 // Client Component (accessible drag-and-drop file upload with progress and validation)
-'use client';
+"use client";
 
-import React, { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { uploadDocumentAction } from '@/app/actions/documents';
-import { useToast } from '@/components/ui/Toast';
-import { Button } from '@/components/ui/Button';
-import { FiUploadCloud, FiFile, FiAlertCircle, FiCheck } from 'react-icons/fi';
+import React, { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { uploadDocumentAction } from "@/app/actions/documents";
+import { useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
+import { FiUploadCloud, FiFile, FiAlertCircle, FiCheck } from "react-icons/fi";
 
 interface UploadDropzoneProps {
   currentCount: number;
@@ -23,7 +23,7 @@ export function UploadDropzone({
 }: UploadDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [uploadFileName, setUploadFileName] = useState<string>('');
+  const [uploadFileName, setUploadFileName] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,13 +37,18 @@ export function UploadDropzone({
 
     if (isLimitReached) {
       setErrorMessage(
-        `Upload disabled: you have reached the maximum allowance of ${maxCount} documents. Delete an existing document to upload a new one.`
+        `Upload disabled: you have reached the maximum allowance of ${maxCount} documents. Delete an existing document to upload a new one.`,
       );
       return;
     }
 
-    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
-      setErrorMessage('Invalid file type: Only PDF documents (.pdf) are supported.');
+    if (
+      !file.name.toLowerCase().endsWith(".pdf") &&
+      file.type !== "application/pdf"
+    ) {
+      setErrorMessage(
+        "Invalid file type: Only PDF documents (.pdf) are supported.",
+      );
       return;
     }
 
@@ -51,7 +56,7 @@ export function UploadDropzone({
     if (file.size > maxSizeBytes) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
       setErrorMessage(
-        `File exceeds 10 MB limit (${sizeMB} MB). Please choose a smaller document.`
+        `File exceeds 10 MB limit (${sizeMB} MB). Please choose a smaller document.`,
       );
       return;
     }
@@ -72,39 +77,50 @@ export function UploadDropzone({
     }, 150);
 
     try {
-      const res = await uploadDocumentAction({
-        name: file.name,
-        size: file.size,
-      });
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await uploadDocumentAction(formData);
 
       clearInterval(progressInterval);
-      setUploadProgress(100);
 
       if (res.success) {
+        setUploadProgress(100);
+
         toast({
-          type: 'success',
-          title: 'Document uploaded',
+          type: "success",
+          title: "Document uploaded",
           description: `"${file.name}" is now processing text vectors and citations.`,
         });
+
         setTimeout(() => {
           setUploadProgress(null);
-          setUploadFileName('');
+          setUploadFileName("");
           router.refresh();
           onClose?.();
         }, 600);
       } else {
         setUploadProgress(null);
-        setErrorMessage(res.error || 'Upload failed');
+        setUploadFileName("");
+        setErrorMessage(res.error || "Upload failed");
+
         toast({
-          type: 'error',
-          title: 'Upload failed',
+          type: "error",
+          title: "Upload failed",
           description: res.error,
         });
       }
-    } catch {
+    } catch (error: unknown) {
       clearInterval(progressInterval);
       setUploadProgress(null);
-      setErrorMessage('A network error occurred during upload.');
+      setUploadFileName("");
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "A network error occurred during upload.";
+
+      setErrorMessage(message);
     }
   };
 
@@ -131,7 +147,7 @@ export function UploadDropzone({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       validateAndUpload(e.target.files[0]);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
@@ -143,10 +159,14 @@ export function UploadDropzone({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => !isLimitReached && uploadProgress === null && fileInputRef.current?.click()}
+        onClick={() =>
+          !isLimitReached &&
+          uploadProgress === null &&
+          fileInputRef.current?.click()
+        }
         onKeyDown={(e) => {
           if (
-            (e.key === 'Enter' || e.key === ' ') &&
+            (e.key === "Enter" || e.key === " ") &&
             !isLimitReached &&
             uploadProgress === null
           ) {
@@ -159,10 +179,10 @@ export function UploadDropzone({
         aria-label="Upload PDF file dropzone"
         className={`relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 ${
           isLimitReached
-            ? 'bg-zinc-100/70 border-zinc-300 opacity-80 cursor-not-allowed'
+            ? "bg-zinc-100/70 border-zinc-300 opacity-80 cursor-not-allowed"
             : isDragging
-            ? 'border-indigo-600 bg-indigo-50/60 scale-[0.99]'
-            : 'border-zinc-200 hover:border-zinc-300 bg-white hover:bg-zinc-50/60 cursor-pointer'
+              ? "border-indigo-600 bg-indigo-50/60 scale-[0.99]"
+              : "border-zinc-200 hover:border-zinc-300 bg-white hover:bg-zinc-50/60 cursor-pointer"
         }`}
       >
         <input
@@ -188,7 +208,9 @@ export function UploadDropzone({
                 {uploadFileName}
               </p>
               <p className="text-[11px] text-zinc-500 mt-0.5">
-                {uploadProgress < 100 ? `Uploading document (${uploadProgress}%)` : 'Processing initial headers...'}
+                {uploadProgress < 100
+                  ? `Uploading document (${uploadProgress}%)`
+                  : "Processing initial headers..."}
               </p>
             </div>
             {/* Progress bar */}
@@ -204,8 +226,8 @@ export function UploadDropzone({
             <div
               className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
                 isLimitReached
-                  ? 'bg-zinc-200 text-zinc-400'
-                  : 'bg-indigo-50 text-indigo-600 border border-indigo-100'
+                  ? "bg-zinc-200 text-zinc-400"
+                  : "bg-indigo-50 text-indigo-600 border border-indigo-100"
               }`}
             >
               <FiUploadCloud className="w-6 h-6" />
@@ -214,20 +236,20 @@ export function UploadDropzone({
             <div>
               <p className="text-sm font-semibold text-zinc-900">
                 {isLimitReached ? (
-                  'Upload limit reached (5 of 5 documents)'
+                  "Upload limit reached (5 of 5 documents)"
                 ) : (
                   <>
                     <span className="text-indigo-600 hover:underline">
                       Click to upload
-                    </span>{' '}
+                    </span>{" "}
                     or drag and drop PDF here
                   </>
                 )}
               </p>
               <p className="text-xs text-zinc-500 mt-1">
                 {isLimitReached
-                  ? 'Free tier quota: delete an existing document to upload another.'
-                  : 'PDF up to 10 MB and 100 pages maximum.'}
+                  ? "Free tier quota: delete an existing document to upload another."
+                  : "PDF up to 10 MB and 100 pages maximum."}
               </p>
             </div>
 

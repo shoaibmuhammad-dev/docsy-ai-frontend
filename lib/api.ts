@@ -122,10 +122,29 @@ export async function login(
 }
 
 // GET /auth/me
+// Accepts the response shapes an /auth/me endpoint commonly returns:
+//   { success, data: { user: {...} } }   (what the auth setup uses)
+//   { success, data: {...user fields} }
+//   { success, user: {...} }
 export async function getCurrentUser(): Promise<User> {
-  const { user } = await request<{ user: User }>("/auth/me", {
+  const data = await request<{ user?: User } & Partial<User>>("/auth/me", {
     redirectOnUnauthorized: true,
   });
+
+  const user =
+    data.user ?? (data.id && data.email ? (data as User) : undefined);
+
+  if (!user) {
+    // Fail loudly instead of rendering a header with no user
+    console.error(
+      "[api] /auth/me returned an unexpected shape:",
+      JSON.stringify(data),
+    );
+    throw new ApiError(
+      "Could not load your profile. Unexpected response from /auth/me",
+    );
+  }
+
   return user;
 }
 

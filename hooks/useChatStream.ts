@@ -47,7 +47,7 @@ export function useChatStream({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ content: prompt }),
           signal: controller.signal,
         });
 

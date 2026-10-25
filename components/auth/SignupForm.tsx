@@ -1,17 +1,20 @@
 // Client Component (interactive signup form with action state and password hint)
-'use client';
+"use client";
 
-import React, { useActionState } from 'react';
-import Link from 'next/link';
-import { signupAction, AuthActionState } from '@/app/actions/auth';
-import { Field } from '@/components/ui/Field';
-import { Button } from '@/components/ui/Button';
-import { FiAlertCircle, FiArrowRight } from 'react-icons/fi';
+import React, { useActionState } from "react";
+import Link from "next/link";
+import { signupAction, AuthActionState } from "@/app/actions/auth";
+import { Field } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+import { FiAlertCircle, FiArrowRight } from "react-icons/fi";
 
 const initialState: AuthActionState = {};
 
 export function SignupForm() {
-  const [state, formAction, isPending] = useActionState(signupAction, initialState);
+  const [state, formAction, isPending] = useActionState(
+    signupAction,
+    initialState,
+  );
 
   return (
     <form action={formAction} className="space-y-4">
@@ -33,7 +36,7 @@ export function SignupForm() {
         autoComplete="name"
         required
         error={state.fieldErrors?.name?.[0]}
-        defaultValue="Alex Morgan"
+        // defaultValue=""
       />
 
       <Field
@@ -44,7 +47,7 @@ export function SignupForm() {
         autoComplete="email"
         required
         error={state.fieldErrors?.email?.[0]}
-        defaultValue="alex.morgan@company.com"
+        // defaultValue="alex.morgan@company.com"
       />
 
       <Field
@@ -56,7 +59,7 @@ export function SignupForm() {
         required
         hint="Must be between 8 and 72 characters"
         error={state.fieldErrors?.password?.[0]}
-        defaultValue="securePassword123"
+        // defaultValue="securePassword123"
       />
 
       <Button
@@ -72,7 +75,7 @@ export function SignupForm() {
 
       <div className="text-center pt-2">
         <p className="text-xs text-zinc-500">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <Link
             href="/login"
             className="font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
