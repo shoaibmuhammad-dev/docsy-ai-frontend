@@ -1,16 +1,21 @@
 // Client Component (interactive documents page manager with selection, pagination, and upload modal)
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { PdfDocument, Pagination } from '@/lib/types';
-import { UploadDropzone } from './UploadDropzone';
-import { DocumentRow } from './DocumentRow';
-import { MultiSelectActionBar } from './MultiSelectActionBar';
-import { ProcessingPoller } from './ProcessingPoller';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { Button } from '@/components/ui/Button';
-import { FiPlus, FiChevronLeft, FiChevronRight, FiFileText } from 'react-icons/fi';
+import React, { useState } from "react";
+import Link from "next/link";
+import { PdfDocument, Pagination } from "@/lib/types";
+import { UploadDropzone } from "./UploadDropzone";
+import { DocumentRow } from "./DocumentRow";
+import { MultiSelectActionBar } from "./MultiSelectActionBar";
+import { ProcessingPoller } from "./ProcessingPoller";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
+import {
+  FiPlus,
+  FiChevronLeft,
+  FiChevronRight,
+  FiFileText,
+} from "react-icons/fi";
 
 interface DocumentsWorkspaceProps {
   documents: PdfDocument[];
@@ -24,7 +29,7 @@ export function DocumentsWorkspace({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showUploadDropzone, setShowUploadDropzone] = useState(false);
 
-  const hasProcessing = documents.some((d) => d.status === 'processing');
+  const hasProcessing = documents.some((d) => d.status === "processing");
   const totalCount = pagination.total;
   const isAtLimit = totalCount >= 5;
 
@@ -63,8 +68,8 @@ export function DocumentsWorkspace({
         <div className="flex items-center gap-3">
           {/* Document quota counter */}
           <div className="text-xs text-zinc-600 bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-xl font-medium">
-            <span className={isAtLimit ? 'text-amber-600 font-semibold' : ''}>
-              {totalCount} of 5 documents
+            <span className={isAtLimit ? "text-amber-600 font-semibold" : ""}>
+              {totalCount} documents
             </span>
           </div>
 
@@ -74,7 +79,7 @@ export function DocumentsWorkspace({
             onClick={() => setShowUploadDropzone((prev) => !prev)}
             leftIcon={<FiPlus className="w-4 h-4" />}
           >
-            {showUploadDropzone ? 'Close upload' : 'Upload PDF'}
+            {showUploadDropzone ? "Close upload" : "Upload PDF"}
           </Button>
         </div>
       </div>
@@ -110,9 +115,8 @@ export function DocumentsWorkspace({
       ) : (
         <div className="space-y-2.5">
           {/* Table Header on desktop */}
-          <div className="hidden md:flex items-center justify-between px-4 py-2 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+          <div className="hidden md:flex items-center justify-between py-2 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
             <div className="flex items-center gap-6">
-              <span className="w-5" />
               <span>Document Details</span>
             </div>
             <div className="flex items-center gap-12 pr-2">
@@ -139,7 +143,7 @@ export function DocumentsWorkspace({
                 <Link
                   href={`/documents?page=${pagination.page - 1}`}
                   className={`p-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors ${
-                    pagination.page <= 1 ? 'pointer-events-none opacity-40' : ''
+                    pagination.page <= 1 ? "pointer-events-none opacity-40" : ""
                   }`}
                   aria-label="Previous page"
                 >
@@ -149,8 +153,8 @@ export function DocumentsWorkspace({
                   href={`/documents?page=${pagination.page + 1}`}
                   className={`p-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors ${
                     pagination.page >= pagination.totalPages
-                      ? 'pointer-events-none opacity-40'
-                      : ''
+                      ? "pointer-events-none opacity-40"
+                      : ""
                   }`}
                   aria-label="Next page"
                 >

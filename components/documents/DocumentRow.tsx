@@ -1,23 +1,23 @@
 // Client Component (interactive document row with actions, selection, and confirm dialog)
-'use client';
+"use client";
 
-import React, { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { PdfDocument } from '@/lib/types';
-import { formatRelativeTime } from '@/lib/format';
-import { deleteDocumentAction } from '@/app/actions/documents';
-import { createChatAction } from '@/app/actions/chats';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { useToast } from '@/components/ui/Toast';
+import React, { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { PdfDocument } from "@/lib/types";
+import { formatRelativeTime } from "@/lib/format";
+import { deleteDocumentAction } from "@/app/actions/documents";
+import { createChatAction } from "@/app/actions/chats";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/components/ui/Toast";
 import {
   FiFileText,
   FiMessageSquare,
   FiTrash2,
   FiAlertTriangle,
   FiCheck,
-} from 'react-icons/fi';
+} from "react-icons/fi";
 
 interface DocumentRowProps {
   document: PdfDocument;
@@ -37,9 +37,9 @@ export function DocumentRow({
   const router = useRouter();
   const { toast } = useToast();
 
-  const isReady = doc.status === 'ready';
-  const isFailed = doc.status === 'failed';
-  const isProcessing = doc.status === 'processing';
+  const isReady = doc.status === "ready";
+  const isFailed = doc.status === "failed";
+  const isProcessing = doc.status === "processing";
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -49,15 +49,15 @@ export function DocumentRow({
 
     if (res.success) {
       toast({
-        type: 'success',
-        title: 'Document deleted',
+        type: "success",
+        title: "Document deleted",
         description: `"${doc.title}" was removed.`,
       });
       router.refresh();
     } else {
       toast({
-        type: 'error',
-        title: 'Delete failed',
+        type: "error",
+        title: "Delete failed",
         description: res.error,
       });
     }
@@ -68,15 +68,15 @@ export function DocumentRow({
       const res = await createChatAction([doc.id]);
       if (res.success && res.data) {
         toast({
-          type: 'success',
-          title: 'Chat created',
+          type: "success",
+          title: "Chat created",
           description: `Ready to converse with ${doc.title}`,
         });
         router.push(`/chats/${res.data.id}`);
       } else {
         toast({
-          type: 'error',
-          title: 'Failed to start chat',
+          type: "error",
+          title: "Failed to start chat",
           description: res.error,
         });
       }
@@ -87,7 +87,9 @@ export function DocumentRow({
     <>
       <div
         className={`group relative flex flex-col md:flex-row md:items-center justify-between p-4 bg-white border border-zinc-200 rounded-2xl hover:border-zinc-300 transition-all gap-4 ${
-          isSelected ? 'ring-2 ring-indigo-600 border-indigo-600 bg-indigo-50/20' : ''
+          isSelected
+            ? "ring-2 ring-indigo-600 border-indigo-600 bg-indigo-50/20"
+            : ""
         }`}
       >
         {/* Document meta with selection checkbox */}
@@ -114,10 +116,10 @@ export function DocumentRow({
           <div
             className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
               isFailed
-                ? 'bg-red-50 text-red-600 border-red-200'
+                ? "bg-red-50 text-red-600 border-red-200"
                 : isProcessing
-                ? 'bg-amber-50 text-amber-600 border-amber-200'
-                : 'bg-zinc-100 text-zinc-700 border-zinc-200'
+                  ? "bg-amber-50 text-amber-600 border-amber-200"
+                  : "bg-zinc-100 text-zinc-700 border-zinc-200"
             }`}
           >
             <FiFileText className="w-4 h-4" />
@@ -132,7 +134,9 @@ export function DocumentRow({
             </div>
 
             <div className="flex items-center gap-2 text-xs text-zinc-500 mt-1">
-              <span>{doc.pageCount} {doc.pageCount === 1 ? 'page' : 'pages'}</span>
+              <span>
+                {doc.pageCount} {doc.pageCount === 1 ? "page" : "pages"}
+              </span>
               <span aria-hidden="true">·</span>
               <span>Uploaded {formatRelativeTime(doc.createdAt)}</span>
             </div>

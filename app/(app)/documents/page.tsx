@@ -1,10 +1,10 @@
 // Server Component
-import { listDocuments } from '@/lib/api';
-import { DocumentsWorkspace } from '@/components/documents/DocumentsWorkspace';
+import { listDocuments } from "@/lib/api";
+import { DocumentsWorkspace } from "@/components/documents/DocumentsWorkspace";
 
 export const metadata = {
-  title: 'Documents · Chat with PDF',
-  description: 'Manage and chat with uploaded PDF documents',
+  title: "Documents · Chat with PDF",
+  description: "Manage and chat with uploaded PDF documents",
 };
 
 export default async function DocumentsPage({
@@ -13,7 +13,7 @@ export default async function DocumentsPage({
   searchParams: Promise<{ page?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const page = parseInt(resolvedSearchParams.page || '1', 10) || 1;
+  const page = parseInt(resolvedSearchParams.page || "1", 10) || 1;
 
   const { documents, pagination } = await listDocuments(page, 10);
 

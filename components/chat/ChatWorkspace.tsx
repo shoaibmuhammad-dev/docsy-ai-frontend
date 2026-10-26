@@ -383,7 +383,7 @@ export function ChatWorkspace({
         >
           <PdfViewer
             key={activeDoc.id}
-            fileUrl={`/mock-files/${activeDoc.id}.pdf`}
+            documentId={activeDoc.id}
             pageCount={activeDoc.pageCount || 10}
             currentPage={currentPage}
             highlightPage={highlightPage}

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createDocument, deleteDocument } from "@/lib/api";
+import { createDocument, deleteDocument, getDocumentFileUrl } from "@/lib/api";
 import { ApiError, PdfDocument } from "@/lib/types";
 
 export type ActionResult<T = undefined> =
@@ -50,5 +50,21 @@ export async function deleteDocumentAction(id: string): Promise<ActionResult> {
       return { success: false, error: err.message };
     }
     return { success: false, error: "Failed to delete the document." };
+  }
+}
+
+// A temporary signed link to view the PDF (valid for about an hour). The viewer
+// asks for a fresh one whenever it opens a document, so links never go stale.
+export async function getDocumentUrlAction(
+  id: string,
+): Promise<ActionResult<{ url: string }>> {
+  try {
+    const { url } = await getDocumentFileUrl(id);
+    return { success: true, data: { url } };
+  } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      return { success: false, error: err.message };
+    }
+    return { success: false, error: "Failed to load the PDF." };
   }
 }
