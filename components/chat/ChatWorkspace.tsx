@@ -349,7 +349,7 @@ export function ChatWorkspace({
 
           {/* Composer Footer: always visible at the bottom, like WhatsApp */}
           <div className="shrink-0 border-t border-zinc-200 bg-white p-3 sm:p-4">
-            <div className="max-w-3xl mx-auto">
+            <div className="w-full mx-auto">
               <MessageComposer
                 onSend={handleSendMessage}
                 onStop={stopStreaming}

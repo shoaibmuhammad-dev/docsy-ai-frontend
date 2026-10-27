@@ -1,17 +1,11 @@
 // Client Component (interactive message item with copy feedback, sources row, and citation triggers)
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Message, PdfDocument } from '@/lib/types';
-import { formatTime } from '@/lib/format';
-import { MarkdownContent } from './MarkdownContent';
-import {
-  FiCopy,
-  FiCheck,
-  FiSearch,
-  FiFileText,
-  FiInfo,
-} from 'react-icons/fi';
+import React, { useState } from "react";
+import { Message, PdfDocument } from "@/lib/types";
+import { formatTime } from "@/lib/format";
+import { MarkdownContent } from "./MarkdownContent";
+import { FiCopy, FiCheck, FiSearch, FiFileText, FiInfo } from "react-icons/fi";
 
 interface MessageItemProps {
   message: Message;
@@ -28,10 +22,9 @@ export function MessageItem({
 }: MessageItemProps) {
   const [copied, setCopied] = useState(false);
 
-  const isUser = message.role === 'user';
+  const isUser = message.role === "user";
   const isNotFound =
-    !isUser &&
-    message.content.includes("I couldn't find anything relevant");
+    !isUser && message.content.includes("I couldn't find anything relevant");
 
   const handleCopy = async () => {
     try {
@@ -47,7 +40,9 @@ export function MessageItem({
     return (
       <div className="flex justify-end w-full">
         <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-tr-xs bg-indigo-600 text-white px-4 py-2.5 shadow-xs space-y-1">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+            {message.content}
+          </p>
           <div className="flex justify-end text-[10px] text-indigo-200">
             <span>{formatTime(message.createdAt)}</span>
           </div>
@@ -65,7 +60,9 @@ export function MessageItem({
             <FiSearch className="w-4 h-4" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium text-zinc-900">No matching content found</p>
+            <p className="text-sm font-medium text-zinc-900">
+              No matching content found
+            </p>
             <p className="text-xs text-zinc-600 leading-relaxed">
               {message.content}
             </p>
@@ -107,9 +104,15 @@ export function MessageItem({
                   className="inline-flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg bg-zinc-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-zinc-200 transition-colors text-zinc-700 cursor-pointer"
                 >
                   <FiFileText className="w-3 h-3 text-zinc-400" />
-                  <span className="font-semibold text-indigo-600">[{c.index}]</span>
+                  <span className="font-semibold text-indigo-600">
+                    [{c.index}]
+                  </span>
                   <span>Page {c.page}</span>
-                  {doc && <span className="text-zinc-400 truncate max-w-[120px]">· {doc.title}</span>}
+                  {doc && (
+                    <span className="text-zinc-400 truncate max-w-[120px]">
+                      · {doc.title}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -118,13 +121,13 @@ export function MessageItem({
       </div>
 
       {/* Message Meta & Copy Button */}
-      <div className="flex items-center justify-between text-xs text-zinc-400 px-1">
+      <div className="w-full flex items-center justify-between text-xs text-zinc-400 px-1">
         <span className="text-[11px]">{formatTime(message.createdAt)}</span>
 
         <button
           type="button"
           onClick={handleCopy}
-          aria-label={copied ? 'Copied text to clipboard' : 'Copy message text'}
+          aria-label={copied ? "Copied text to clipboard" : "Copy message text"}
           className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-900 transition-colors px-2 py-1 rounded-md hover:bg-zinc-100 cursor-pointer"
         >
           {copied ? (

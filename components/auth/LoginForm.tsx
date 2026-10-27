@@ -1,4 +1,3 @@
-// Client Component (interactive login form with action state and validation)
 "use client";
 
 import React, { useActionState } from "react";

@@ -18,6 +18,7 @@ import {
   FiAlertTriangle,
   FiCheck,
 } from "react-icons/fi";
+import { useOpenChat } from "@/hooks/useOpenChat";
 
 interface DocumentRowProps {
   document: PdfDocument;
@@ -33,6 +34,8 @@ export function DocumentRow({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isStartingChat, startChatTransition] = useTransition();
+
+  const { openChat, isOpening, isOpeningDocuments } = useOpenChat();
 
   const router = useRouter();
   const { toast } = useToast();
@@ -65,7 +68,8 @@ export function DocumentRow({
 
   const handleStartChat = () => {
     startChatTransition(async () => {
-      const res = await createChatAction([doc.id]);
+      // const res = await createChatAction([doc.id]);
+      const res = await openChat([doc.id]);
       if (res.success && res.data) {
         toast({
           type: "success",
@@ -156,7 +160,7 @@ export function DocumentRow({
             <Button
               variant="primary"
               size="sm"
-              onClick={handleStartChat}
+              onClick={() => openChat([doc.id])}
               isLoading={isStartingChat}
               leftIcon={<FiMessageSquare className="w-3.5 h-3.5" />}
             >

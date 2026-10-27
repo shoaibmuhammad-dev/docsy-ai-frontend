@@ -1,12 +1,13 @@
 // Client Component (floating action bar for multi-document chat initiation)
-'use client';
+"use client";
 
-import React, { useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { createChatAction } from '@/app/actions/chats';
-import { Button } from '@/components/ui/Button';
-import { useToast } from '@/components/ui/Toast';
-import { FiMessageSquare, FiX } from 'react-icons/fi';
+import React, { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { createChatAction } from "@/app/actions/chats";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { FiMessageSquare, FiX } from "react-icons/fi";
+import { useOpenChat } from "@/hooks/useOpenChat";
 
 interface MultiSelectActionBarProps {
   selectedIds: string[];
@@ -20,6 +21,7 @@ export function MultiSelectActionBar({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { toast } = useToast();
+  const { openChat, isOpening, isOpeningDocuments } = useOpenChat();
 
   if (selectedIds.length === 0) return null;
 
@@ -30,15 +32,15 @@ export function MultiSelectActionBar({
       const res = await createChatAction(selectedIds);
       if (res.success && res.data) {
         toast({
-          type: 'success',
-          title: 'Multi-document chat created',
+          type: "success",
+          title: "Multi-document chat created",
           description: `Initialized chat with ${count} selected documents.`,
         });
         router.push(`/chats/${res.data.id}`);
       } else {
         toast({
-          type: 'error',
-          title: 'Failed to create chat',
+          type: "error",
+          title: "Failed to create chat",
           description: res.error,
         });
       }
@@ -53,7 +55,9 @@ export function MultiSelectActionBar({
             {count}
           </span>
           <span className="text-xs font-medium text-zinc-200">
-            {count === 1 ? '1 document selected' : `${count} documents selected`}
+            {count === 1
+              ? "1 document selected"
+              : `${count} documents selected`}
           </span>
         </div>
 
@@ -62,7 +66,7 @@ export function MultiSelectActionBar({
         <Button
           variant="primary"
           size="sm"
-          onClick={handleStartMultiChat}
+          onClick={() => openChat(selectedIds)}
           isLoading={isPending}
           leftIcon={<FiMessageSquare className="w-3.5 h-3.5" />}
         >

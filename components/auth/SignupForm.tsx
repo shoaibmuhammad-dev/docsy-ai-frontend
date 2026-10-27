@@ -1,4 +1,3 @@
-// Client Component (interactive signup form with action state and password hint)
 "use client";
 
 import React, { useActionState } from "react";
