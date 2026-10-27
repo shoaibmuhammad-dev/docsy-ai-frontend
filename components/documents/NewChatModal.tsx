@@ -1,14 +1,13 @@
-// Client Component (modal dialog for selecting 1-5 ready documents to start a new chat)
-'use client';
+"use client";
 
-import React, { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { PdfDocument } from '@/lib/types';
-import { createChatAction } from '@/app/actions/chats';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { useToast } from '@/components/ui/Toast';
-import { FiSearch, FiFileText, FiCheck, FiMessageSquare } from 'react-icons/fi';
+import React, { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { PdfDocument } from "@/lib/types";
+import { createChatAction } from "@/app/actions/chats";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { FiSearch, FiFileText, FiCheck, FiMessageSquare } from "react-icons/fi";
 
 interface NewChatModalProps {
   isOpen: boolean;
@@ -21,16 +20,16 @@ export function NewChatModal({
   onClose,
   availableDocuments,
 }: NewChatModalProps) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
 
   const router = useRouter();
   const { toast } = useToast();
 
-  const readyDocs = availableDocuments.filter((d) => d.status === 'ready');
+  const readyDocs = availableDocuments.filter((d) => d.status === "ready");
   const filteredDocs = readyDocs.filter((d) =>
-    d.title.toLowerCase().includes(search.toLowerCase())
+    d.title.toLowerCase().includes(search.toLowerCase()),
   );
 
   const toggleSelect = (id: string) => {
@@ -39,9 +38,9 @@ export function NewChatModal({
     } else {
       if (selectedDocIds.length >= 5) {
         toast({
-          type: 'error',
-          title: 'Limit reached',
-          description: 'A maximum of 5 documents can be selected per chat.',
+          type: "error",
+          title: "Limit reached",
+          description: "A maximum of 5 documents can be selected per chat.",
         });
         return;
       }
@@ -54,18 +53,20 @@ export function NewChatModal({
 
     startTransition(async () => {
       const res = await createChatAction(selectedDocIds);
-      if (res.success && res.data) {
+
+      if (res.success === true && res.data) {
         toast({
-          type: 'success',
-          title: 'Chat started',
-          description: 'Conversation initialized with selected documents.',
+          type: "success",
+          title: "Chat started",
+          description: "Conversation initialized with selected documents.",
         });
+
         onClose();
         router.push(`/chats/${res.data.id}`);
-      } else {
+      } else if (res.success === false) {
         toast({
-          type: 'error',
-          title: 'Failed to create chat',
+          type: "error",
+          title: "Failed to create chat",
           description: res.error,
         });
       }
@@ -98,8 +99,8 @@ export function NewChatModal({
           {filteredDocs.length === 0 ? (
             <div className="text-center py-6 text-xs text-zinc-500">
               {readyDocs.length === 0
-                ? 'No ready documents available. Upload a PDF first.'
-                : 'No documents match your search.'}
+                ? "No ready documents available. Upload a PDF first."
+                : "No documents match your search."}
             </div>
           ) : (
             filteredDocs.map((doc) => {
@@ -110,8 +111,8 @@ export function NewChatModal({
                   onClick={() => toggleSelect(doc.id)}
                   className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-colors ${
                     isSelected
-                      ? 'bg-indigo-50/70 border border-indigo-200'
-                      : 'hover:bg-zinc-50 border border-transparent'
+                      ? "bg-indigo-50/70 border border-indigo-200"
+                      : "hover:bg-zinc-50 border border-transparent"
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">

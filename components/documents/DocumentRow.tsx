@@ -66,27 +66,6 @@ export function DocumentRow({
     }
   };
 
-  const handleStartChat = () => {
-    startChatTransition(async () => {
-      // const res = await createChatAction([doc.id]);
-      const res = await openChat([doc.id]);
-      if (res.success && res.data) {
-        toast({
-          type: "success",
-          title: "Chat created",
-          description: `Ready to converse with ${doc.title}`,
-        });
-        router.push(`/chats/${res.data.id}`);
-      } else {
-        toast({
-          type: "error",
-          title: "Failed to start chat",
-          description: res.error,
-        });
-      }
-    });
-  };
-
   return (
     <>
       <div

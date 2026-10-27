@@ -27,26 +27,6 @@ export function MultiSelectActionBar({
 
   const count = selectedIds.length;
 
-  const handleStartMultiChat = () => {
-    startTransition(async () => {
-      const res = await createChatAction(selectedIds);
-      if (res.success && res.data) {
-        toast({
-          type: "success",
-          title: "Multi-document chat created",
-          description: `Initialized chat with ${count} selected documents.`,
-        });
-        router.push(`/chats/${res.data.id}`);
-      } else {
-        toast({
-          type: "error",
-          title: "Failed to create chat",
-          description: res.error,
-        });
-      }
-    });
-  };
-
   return (
     <div className="fixed bottom-6 inset-x-0 z-40 flex justify-center px-4 pointer-events-none">
       <div className="pointer-events-auto flex items-center gap-3 px-4 py-3 bg-zinc-900 text-white rounded-2xl shadow-xl border border-zinc-800 animate-in fade-in slide-in-from-bottom-4">
