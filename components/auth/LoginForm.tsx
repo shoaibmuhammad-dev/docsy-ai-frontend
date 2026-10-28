@@ -40,6 +40,14 @@ export function LoginForm() {
 
       <Field
         label="Password"
+        labelAction={
+          <Link
+            href="/forgot-password"
+            className="text-xs text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+          >
+            Forgot password?
+          </Link>
+        }
         name="password"
         type="password"
         placeholder="••••••••"

@@ -71,7 +71,7 @@ export function AppHeader({ user }: AppHeaderProps) {
             trigger={
               <button
                 type="button"
-                className="flex items-center gap-2 p-1 pl-2 pr-1.5 rounded-xl border border-zinc-200 hover:bg-zinc-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 text-left"
+                className="flex items-center gap-2 p-1 pl-2 pr-1.5 cursor-pointer rounded-xl border border-zinc-200 hover:bg-zinc-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 text-left"
                 aria-label="User profile options"
               >
                 <div className="w-6 h-6 rounded-lg bg-indigo-50 border border-indigo-200/60 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">

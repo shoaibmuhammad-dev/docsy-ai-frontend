@@ -121,6 +121,48 @@ export async function login(
   });
 }
 
+// POST /auth/forgot-password
+export async function forgotPassword(email: string): Promise<AuthResult> {
+  const fieldErrors: Record<string, string[]> = {};
+  if (!EMAIL_PATTERN.test(email.trim())) {
+    fieldErrors.email = ["Enter a valid email address"];
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    throw new ApiError("Validation failed", fieldErrors);
+  }
+
+  return authRequest("/auth/forgot-password", {
+    email: email.trim().toLowerCase(),
+  });
+}
+
+// POST /auth/reset-password
+// POST /auth/reset-password
+export async function resetPassword(
+  token: string,
+  password: string,
+): Promise<AuthResult> {
+  const fieldErrors: Record<string, string[]> = {};
+
+  if (!token) {
+    fieldErrors.token = ["Reset token is required."];
+  }
+
+  if (!password) {
+    fieldErrors.password = ["Password is required."];
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    throw new ApiError("Validation failed", fieldErrors);
+  }
+
+  return authRequest("/auth/reset-password", {
+    token,
+    password,
+  });
+}
+
 // GET /auth/me
 // Accepts the response shapes an /auth/me endpoint commonly returns:
 //   { success, data: { user: {...} } }   (what the auth setup uses)

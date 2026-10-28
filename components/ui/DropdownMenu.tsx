@@ -1,7 +1,7 @@
 // Client Component (interactive dropdown menu with keyboard and click-outside listeners)
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 
 export interface DropdownMenuItem {
   label: string;
@@ -14,15 +14,15 @@ export interface DropdownMenuItem {
 interface DropdownMenuProps {
   trigger: React.ReactNode;
   items: DropdownMenuItem[];
-  align?: 'left' | 'right';
+  align?: "left" | "right";
   className?: string;
 }
 
 export function DropdownMenu({
   trigger,
   items,
-  align = 'right',
-  className = '',
+  align = "right",
+  className = "",
 }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -35,25 +35,31 @@ export function DropdownMenu({
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
+      if (event.key === "Escape" && isOpen) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
 
   return (
-    <div className={`relative inline-block text-left ${className}`} ref={menuRef}>
-      <div onClick={() => setIsOpen((prev) => !prev)} className="cursor-pointer">
+    <div
+      className={`relative inline-block text-left ${className}`}
+      ref={menuRef}
+    >
+      <div
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="cursor-pointer"
+      >
         {trigger}
       </div>
 
@@ -62,7 +68,7 @@ export function DropdownMenu({
           role="menu"
           aria-orientation="vertical"
           className={`absolute ${
-            align === 'right' ? 'right-0' : 'left-0'
+            align === "right" ? "right-0" : "left-0"
           } mt-1.5 w-48 rounded-xl bg-white border border-zinc-200 py-1 shadow-lg z-50 focus:outline-none`}
         >
           {items.map((item, idx) => (
@@ -76,8 +82,8 @@ export function DropdownMenu({
               }}
               className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-left transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${
                 item.isDestructive
-                  ? 'text-red-600 hover:bg-red-50'
-                  : 'text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900'
+                  ? "text-red-600 hover:bg-red-50"
+                  : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
               }`}
             >
               {item.icon && <span className="shrink-0">{item.icon}</span>}
