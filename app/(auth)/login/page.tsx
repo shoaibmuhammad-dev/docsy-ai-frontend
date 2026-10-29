@@ -39,13 +39,6 @@ export default async function LoginPage() {
         <Card className="p-6 shadow-xs">
           <LoginForm />
         </Card>
-
-        {/* Demo credentials hint */}
-        <div className="mt-4 p-3 rounded-xl bg-white border border-zinc-200 text-center text-xs text-zinc-500">
-          <span>
-            Demo credentials pre-filled: test with any email or password
-          </span>
-        </div>
       </div>
     </div>
   );
